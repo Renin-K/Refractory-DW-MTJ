@@ -2,7 +2,7 @@ import os
 import torch
 import numpy as np
 import torchvision
-import modules/module_dwmtj_lif as dwmtj
+import module_dwmtj_lif as dwmtj
 from norse.torch.module import encode
 
 from norse.torch.module.leaky_integrator import LILinearCell
