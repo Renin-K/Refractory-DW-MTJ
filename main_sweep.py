@@ -16,7 +16,7 @@ torch.manual_seed(5)
 BATCH_SIZE = 100
 
 # folder to save results
-target_dir = "fp_sweep"
+target_dir = "230222_fp_sweep0"
 
 # if folder does not exist, create it
 if not os.path.isdir("./outputs/"):
@@ -199,41 +199,41 @@ sac = True      # sacrificial flag, basically the first run will be different fr
 fin_acc = []    # empty array to hold final accuracies
 # sweep variables of interest
 for f in range(0,len(f_poisson)):
-    for h in range(0,len(T)):
-        # seed counter
-        s = 0   
-        while s < SEED:
-            torch.manual_seed(5)    # set torch manual seed
+    #for h in range(0,len(T)):
+    # seed counter
+    s = 0   
+    while s < SEED:
+        torch.manual_seed(5)    # set torch manual seed
 
-            model = Model( # instantiate a model
-                encoder=encode.PoissonEncoder(seq_length=int(T[h]),dt=1e-10,f_max=f_poisson[f]),
-                snn=ConvNet(alpha=100,w2=25e-9),
-                decoder=decode
-            ).to(DEVICE)
+        model = Model( # instantiate a model
+            encoder=encode.PoissonEncoder(seq_length=int(T[0]),dt=1e-10,f_max=f_poisson[f]),
+            snn=ConvNet(alpha=100,w2=25e-9),
+            decoder=decode
+        ).to(DEVICE)
 
-            # set up optimizer
-            optimizer = torch.optim.Adam(model.parameters(), lr=LR)
+        # set up optimizer
+        optimizer = torch.optim.Adam(model.parameters(), lr=LR)
 
-            accuracies = [] # empty containger for the accuracy
-            pbar = trange(EPOCHS, ncols=160, unit="epoch")
-            for epoch in pbar:
-                training_loss, mean_loss = train(model, DEVICE, train_loader, optimizer, epoch, max_epochs=EPOCHS)
-                test_loss, accuracy = test(model, DEVICE, test_loader, epoch)
-                # training_losses += training_loss
-                # mean_losses.append(mean_loss)
-                # test_losses.append(test_loss)
-                accuracies.append(accuracy)       
-                pbar.set_postfix(accuracy=accuracies)
-                if sac: # sacrificial function
-                    break
-            fin_acc.append(accuracies)
-            s += 1
+        accuracies = [] # empty containger for the accuracy
+        pbar = trange(EPOCHS, ncols=160, unit="epoch")
+        for epoch in pbar:
+            training_loss, mean_loss = train(model, DEVICE, train_loader, optimizer, epoch, max_epochs=EPOCHS)
+            test_loss, accuracy = test(model, DEVICE, test_loader, epoch)
+            # training_losses += training_loss
+            # mean_losses.append(mean_loss)
+            # test_losses.append(test_loss)
+            accuracies.append(accuracy)       
+            pbar.set_postfix(accuracy=accuracies)
             if sac: # sacrificial function
-                sac = False
-                fin_acc = []
-                s = 0
-            else: # save outputs every time you finish an epoch
-                np.save("./outputs/" + target_dir + "/fin_acc.npy", np.concatenate(fin_acc))
+                break
+        fin_acc.append(accuracies)
+        s += 1
+        if sac: # sacrificial function
+            sac = False
+            fin_acc = []
+            s = 0
+        else: # save outputs every time you finish an epoch
+            np.save("./outputs/" + target_dir + "/fin_acc.npy", np.concatenate(fin_acc))
 # reshape accuracies to a format that makes sense, then save
 fin_acc = np.concatenate(fin_acc).reshape(len(f_poisson),EPOCHS)
 np.save("./outputs/" + target_dir + "/fin_acc.npy", np.array(fin_acc))
