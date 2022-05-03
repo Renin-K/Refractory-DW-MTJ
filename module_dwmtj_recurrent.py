@@ -2,13 +2,13 @@ import torch
 import torch.jit
 import math
 
-from norse.torch.module.snn import SNNCell
+from norse.torch.module.snn import SNNRecurrentCell
 from typing import NamedTuple, Tuple
 from norse.torch.functional.threshold import threshold
-try:
-    import norse_op
-except ModuleNotFoundError:  # pragma: no cover
-    pass
+# try:
+#     import norse_op
+# except ModuleNotFoundError:  # pragma: no cover
+#     pass
 
 class DWMTJParameters(NamedTuple):
     
@@ -46,7 +46,7 @@ class DWMTJLIFState(NamedTuple):
     x: torch.Tensor
     i: torch.Tensor
 
-class DWMTJRecurrentCell(SNNCell):
+class DWMTJRecurrentCell(SNNRecurrentCell):
 
     def __init__(
         self,
@@ -56,7 +56,7 @@ class DWMTJRecurrentCell(SNNCell):
         **kwargs
     ):
         super().__init__(
-            activation=_lif_step_jit,
+            activation=lif_step,
             activation_sparse=lif_step_sparse,
             state_fallback=self.initial_state,
             p=p,
@@ -79,7 +79,7 @@ class DWMTJRecurrentCell(SNNCell):
                 device=input_tensor.device,
                 dtype=input_tensor.dtype,
             ),
-            v=torch.full(
+            x=torch.full(
                 dims,
                 torch.as_tensor(self.p.x_reset).detach(),
                 device=input_tensor.device,
@@ -91,24 +91,10 @@ class DWMTJRecurrentCell(SNNCell):
                 dtype=torch.float32,
             ),
         )
-        state.v.requires_grad = True
+        state.x.requires_grad = True
         return state
 
-class DWMTJParametersJIT(NamedTuple):
-    """Parametrization of a DW-MTJ neuron
-
-    Parameters:
-        tau_syn_inv (torch.Tensor): inverse synaptic time
-                                    constant (:math:`1/\\tau_\\text{syn}`) in 1/ms
-        tau_mem_inv (torch.Tensor): inverse membrane time
-                                    constant (:math:`1/\\tau_\\text{mem}`) in 1/ms
-        v_leak (torch.Tensor): leak potential in mV
-        v_th (torch.Tensor): threshold potential in mV
-        v_reset (torch.Tensor): reset potential in mV
-        method (str): method to determine the spike threshold
-                      (relevant for surrogate gradients)
-        alpha (torch.Tensor): hyper parameter to use in surrogate gradient computation
-    """
+class DWMTJRecParametersJIT(NamedTuple):
 
     tau_syn_inv: torch.Tensor
     w1: torch.Tensor
@@ -130,7 +116,7 @@ def _lif_step_jit(
     state: DWMTJLIFState,
     input_weights: torch.Tensor,
     recurrent_weights: torch.Tensor,
-    p: DWMTJParametersJIT,
+    p: DWMTJRecParametersJIT,
     dt: float = 1e-10,
 ) -> Tuple[torch.Tensor, DWMTJLIFState]:  # pragma: no cover
 
@@ -143,8 +129,6 @@ def _lif_step_jit(
     mu_Hslope = 4e-7*math.pi*1.7595e11*Delt*p.a  # DW mobility Walker
 
     # compute voltage updates
-    # dv = dt * p.tau_mem_inv * ((p.v_leak - state.v) + state.i)
-    # v_decayed = state.v + dv
     w = state.x*((p.w2-p.w1)/p.x_th) + p.w1
     dx = dt * (((state.i * p.I)/(w * p.d)) * 
         (2*9.274e-24*p.P)/(2*1.602e-19*p.Ms*(1+p.a**2)) - mu_Hfield*p.H - mu_Hslope*Hslope)
@@ -226,34 +210,19 @@ def lif_step(
     p: DWMTJParameters = DWMTJParameters(),
     dt: float = 1e-10,
 ) -> Tuple[torch.Tensor, DWMTJLIFState]:
-    r"""Computes a single euler-integration step of a LIF neuron-model. More
-    specifically it implements one integration step of the following ODE
-    .. math::
-        \begin{align*}
-            \dot{v} &= 1/\tau_{\text{mem}} (v_{\text{leak}} - v + i) \\
-            \dot{i} &= -1/\tau_{\text{syn}} i
-        \end{align*}
-    together with the jump condition
-    .. math::
-        z = \Theta(v - v_{\text{th}})
-    and transition equations
-    .. math::
-        \begin{align*}
-            v &= (1-z) v + z v_{\text{reset}} \\
-            i &= i + w_{\text{input}} z_{\text{in}} \\
-            i &= i + w_{\text{rec}} z_{\text{rec}}
-        \end{align*}
-    where :math:`z_{\text{rec}}` and :math:`z_{\text{in}}` are the recurrent
-    and input spikes respectively.
-    Parameters:
-        input_tensor (torch.Tensor): the input spikes at the current time step
-        s (LIFState): current state of the LIF neuron
-        input_weights (torch.Tensor): synaptic weights for incoming spikes
-        recurrent_weights (torch.Tensor): synaptic weights for recurrent spikes
-        p (LIFParameters): parameters of a leaky integrate and fire neuron
-        dt (float): Integration timestep to use
-    """
-    z, v, i = norse_op.lif_super_step(
-        input_tensor, state, input_weights, recurrent_weights, p, 1e-10
+    jit_rec_params = DWMTJRecParametersJIT(
+        tau_syn_inv=p.tau_syn_inv,
+        w1=p.w1,
+        w2=p.w2,
+        d=p.d,
+        P=p.P,
+        Ms=p.Ms,
+        a=p.a,
+        H=p.H,
+        I=p.I,
+        x_th=p.x_th,
+        x_reset=p.x_reset,
+        method=p.method,
+        alpha=torch.as_tensor(p.alpha),
     )
-    return z, DWMTJLIFState(z=z, v=v, i=i)
+    return _lif_step_jit(input_tensor, state=state, input_weights=input_weights, recurrent_weights=recurrent_weights, p=jit_rec_params, dt=1e-10)

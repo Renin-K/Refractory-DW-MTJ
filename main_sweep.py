@@ -119,9 +119,9 @@ class RecNet(torch.nn.Module):
                 method="super", alpha=100, Hleak=0, w2=25e-9, I=100e-6, dt=1e-10):
         super(RecNet, self).__init__()
         self.l1 = dwmtjrec.DWMTJRecurrentCell(
-            input_features,
-            hidden_features,
-            p=dwmtjrec.DWMTJParameters(method=method,alpha=alpha,Hleak=Hleak,w2=w2,I=I),
+            input_size=input_features,
+            hidden_size=hidden_features,
+            p=dwmtjrec.DWMTJParameters(method=method,alpha=alpha,H=Hleak,w2=w2,I=I),
             dt=dt                     
         )
         self.input_features = input_features
