@@ -15,6 +15,8 @@ class DWMTJParameters(NamedTuple):
                       (relevant for surrogate gradients)
         alpha (float): hyper parameter to use in surrogate gradient computation
     """
+
+    tau_syn_inv: torch.Tensor = torch.as_tensor(1.0/5e-10)
     w1: torch.Tensor = torch.as_tensor(25e-9)
     w2: torch.Tensor = torch.as_tensor(25e-9)
     d: torch.Tensor = torch.as_tensor(1.5e-9)
@@ -74,21 +76,8 @@ class DWMTJCell(SNNCell):
         return state
 
 class DWMTJParametersJIT(NamedTuple):
-    """Parametrization of a DW-MTJ neuron
-
-    Parameters:
-        tau_syn_inv (torch.Tensor): inverse synaptic time
-                                    constant (:math:`1/\\tau_\\text{syn}`) in 1/ms
-        tau_mem_inv (torch.Tensor): inverse membrane time
-                                    constant (:math:`1/\\tau_\\text{mem}`) in 1/ms
-        v_leak (torch.Tensor): leak potential in mV
-        v_th (torch.Tensor): threshold potential in mV
-        v_reset (torch.Tensor): reset potential in mV
-        method (str): method to determine the spike threshold
-                      (relevant for surrogate gradients)
-        alpha (torch.Tensor): hyper parameter to use in surrogate gradient computation
-    """
-
+    
+    tau_syn_inv: torch.Tensor
     w1: torch.Tensor
     w2: torch.Tensor
     d: torch.Tensor
@@ -131,8 +120,10 @@ def _dwmtj_feed_forward_step_jit(
     x_new = (1 - z_new) * x_next + z_new * p.x_reset
     x_new = torch.where(x_new > 0, x_new, torch.tensor(0,dtype=torch.float32,device=torch.device("cuda")))
 
-    # compute current jumps
-    i_new = input_tensor
+    # compute current updates
+    di = -dt * p.tau_syn_inv * state.i
+    i_decayed = state.i + di
+    i_new = input_tensor + i_decayed
 
     return z_new, DWMTJFeedForwardState(x=x_new, i=i_new)
 
@@ -143,6 +134,7 @@ def dwmtj_feed_forward_step(
     dt: float = 1e-10,
 ) -> Tuple[torch.Tensor, DWMTJFeedForwardState]:
     jit_params = DWMTJParametersJIT(
+        tau_syn_inv=p.tau_syn_inv,
         w1=p.w1,
         w2 = p.w2,
         d=p.d,
@@ -164,4 +156,4 @@ def dwmtj_feed_forward_step(
             x=torch.full_like(input_tensor, jit_params.x_reset),
             i=torch.zeros_like(input_tensor),
         )
-    return _dwmtj_feed_forward_step_jit(input_tensor, state=state, p=jit_params, dt=dt)
+    return _dwmtj_feed_forward_step_jit(input_tensor, state=state, p=jit_params, dt=1e-10)

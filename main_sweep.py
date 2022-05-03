@@ -3,20 +3,21 @@ import torch
 import numpy as np
 import torchvision
 import module_dwmtj_lif as dwmtj
+import module_dwmtj_recurrent as dwmtjrec
 from norse.torch.module import encode
 
-from norse.torch.module.leaky_integrator import LILinearCell
+from norse.torch.module.leaky_integrator import LILinearCell,LICell
 
 import os
 from tqdm import tqdm, trange
 
 # set manual seed for PyTorch to reuse weights
-torch.manual_seed(5)
+torch.manual_seed(5)    # use this for the convolutional network
 
 BATCH_SIZE = 100
 
 # folder to save results
-target_dir = "230222_fp_sweep0"
+target_dir = "100422_fp_sweep0"
 
 # if folder does not exist, create it
 if not os.path.isdir("./outputs/"):
@@ -63,9 +64,8 @@ def decode(x):
 
 # define convolutional network class
 class ConvNet(torch.nn.Module):
-    def __init__(       # initial default variables
-        self,  num_channels=1, feature_size=28, method="super", alpha=100, Hleak=0, w2=25e-9, I=100e-6
-    ):
+    def __init__( self,  num_channels=1, feature_size=28, method="super", 
+                alpha=100, Hleak=0, w2=25e-9, I=100e-6):
         super(ConvNet, self).__init__()
 
         self.features = int(((feature_size - 4) / 2 - 4) / 2)               # features at the output of convolution
@@ -112,6 +112,38 @@ class ConvNet(torch.nn.Module):
             v, so = self.out(torch.nn.functional.relu(z), so)
             voltages[ts, :, :] = v
         return voltages
+
+# define recurrent network class
+class RecNet(torch.nn.Module):
+    def __init__(self, input_features, hidden_features, output_features, 
+                method="super", alpha=100, Hleak=0, w2=25e-9, I=100e-6, dt=1e-10):
+        super(RecNet, self).__init__()
+        self.l1 = dwmtjrec.DWMTJRecurrentCell(
+            input_size=input_features,
+            hidden_size=hidden_features,
+            p=dwmtjrec.DWMTJParameters(method=method,alpha=alpha,H=Hleak,w2=w2,I=I),
+            dt=dt                     
+        )
+        self.input_features = input_features
+        self.fc_out = torch.nn.Linear(hidden_features, output_features, bias=False)
+        self.out = LICell(dt=dt)
+
+        self.hidden_features = hidden_features
+        self.output_features = output_features
+        
+    def forward(self, x):
+        seq_length, batch_size, _, _, _ = x.shape
+        s1 = so = None
+        voltages = []
+
+        for ts in range(seq_length):
+            z = x[ts, :, :, :].view(-1, self.input_features)
+            z, s1 = self.l1(z, s1)
+            z = self.fc_out(z)
+            vo, so = self.out(z, so)
+            voltages += [vo]
+
+        return torch.stack(voltages)
 
 # define model container, putting together the model, encoder, and decoder
 class Model(torch.nn.Module):
@@ -176,10 +208,11 @@ def save(path, epoch, model, optimizer, is_best=False):
     )
 
 # model parameters
-EPOCHS = 10         # number of iterations
-T = [30]            # list of number of timesteps
-LR = 0.00002        # learning rate
-SEED = 1            # number of seeds to run the network (kept as 1 if manual seed is applied)
+EPOCHS = 5         # number of iterations
+T = [40]            # list of number of timesteps
+LR = 1e-3           # learning rate
+SEED = 2            # number of seeds to run the network (kept as 1 if manual seed is applied)
+MTYPE = 'conv'      # snn type
 
 # cpu is broken, but kept here in case I ever fix it
 if torch.cuda.is_available():
@@ -188,14 +221,12 @@ else:
     DEVICE = torch.device("cpu")
 
 # sweep parameters (define as needed)
-f_poisson = np.linspace(1e9,10e9,10)
+f_poisson = np.linspace(10e9,10e9,1)
 w2 = np.linspace(25e-9,25e-9,1)
 #T = np.linspace(5,80,16)
 
 np.save("./outputs/" + target_dir + "/f_p.npy", np.array(f_poisson))
 
-
-sac = True      # sacrificial flag, basically the first run will be different from all the rest (not sure why), but this avoids it
 fin_acc = []    # empty array to hold final accuracies
 # sweep variables of interest
 for f in range(0,len(f_poisson)):
@@ -203,11 +234,16 @@ for f in range(0,len(f_poisson)):
     # seed counter
     s = 0   
     while s < SEED:
-        torch.manual_seed(5)    # set torch manual seed
+        torch.manual_seed(5)    # set torch manual seed (convolutional)
+
+        if MTYPE == 'rec':
+            snn = RecNet(28*28, 100, 10)
+        elif MTYPE == 'conv':
+            snn = ConvNet(alpha=100,w2=25e-9)
 
         model = Model( # instantiate a model
             encoder=encode.PoissonEncoder(seq_length=int(T[0]),dt=1e-10,f_max=f_poisson[f]),
-            snn=ConvNet(alpha=100,w2=25e-9),
+            snn=snn,
             decoder=decode
         ).to(DEVICE)
 
@@ -224,16 +260,9 @@ for f in range(0,len(f_poisson)):
             # test_losses.append(test_loss)
             accuracies.append(accuracy)       
             pbar.set_postfix(accuracy=accuracies)
-            if sac: # sacrificial function
-                break
         fin_acc.append(accuracies)
         s += 1
-        if sac: # sacrificial function
-            sac = False
-            fin_acc = []
-            s = 0
-        else: # save outputs every time you finish an epoch
-            np.save("./outputs/" + target_dir + "/fin_acc.npy", np.concatenate(fin_acc))
+        np.save("./outputs/" + target_dir + "/fin_acc.npy", np.concatenate(fin_acc))
 # reshape accuracies to a format that makes sense, then save
-fin_acc = np.concatenate(fin_acc).reshape(len(f_poisson),EPOCHS)
+fin_acc = np.concatenate(fin_acc).reshape(SEED,EPOCHS)
 np.save("./outputs/" + target_dir + "/fin_acc.npy", np.array(fin_acc))
