@@ -131,7 +131,7 @@ def _lif_step_jit(
     input_weights: torch.Tensor,
     recurrent_weights: torch.Tensor,
     p: DWMTJParametersJIT,
-    dt: float = 0.001,
+    dt: float = 1e-10,
 ) -> Tuple[torch.Tensor, DWMTJLIFState]:  # pragma: no cover
 
     # constants
@@ -177,7 +177,7 @@ def lif_step_sparse(
     input_weights: torch.Tensor,
     recurrent_weights: torch.Tensor,
     p: DWMTJParameters = DWMTJParameters(),
-    dt: float = 0.001,
+    dt: float = 1e-10,
 ) -> Tuple[torch.Tensor, DWMTJLIFState]:  # pragma: no cover
 
     # constants
@@ -224,7 +224,7 @@ def lif_step(
     input_weights: torch.Tensor,
     recurrent_weights: torch.Tensor,
     p: DWMTJParameters = DWMTJParameters(),
-    dt: float = 0.001,
+    dt: float = 1e-10,
 ) -> Tuple[torch.Tensor, DWMTJLIFState]:
     r"""Computes a single euler-integration step of a LIF neuron-model. More
     specifically it implements one integration step of the following ODE
@@ -254,6 +254,6 @@ def lif_step(
         dt (float): Integration timestep to use
     """
     z, v, i = norse_op.lif_super_step(
-        input_tensor, state, input_weights, recurrent_weights, p, dt
+        input_tensor, state, input_weights, recurrent_weights, p, 1e-10
     )
     return z, DWMTJLIFState(z=z, v=v, i=i)

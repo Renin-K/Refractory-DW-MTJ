@@ -16,7 +16,7 @@ class DWMTJParameters(NamedTuple):
         alpha (float): hyper parameter to use in surrogate gradient computation
     """
 
-    tau_syn_inv: torch.Tensor = torch.as_tensor(1.0 / 5e-10)
+    tau_syn_inv: torch.Tensor = torch.as_tensor(1.0/5e-10)
     w1: torch.Tensor = torch.as_tensor(25e-9)
     w2: torch.Tensor = torch.as_tensor(25e-9)
     d: torch.Tensor = torch.as_tensor(1.5e-9)
@@ -113,10 +113,6 @@ def _dwmtj_feed_forward_step_jit(
     dt: float = 1e-10,
 ) -> Tuple[torch.Tensor, DWMTJFeedForwardState]:  # pragma: no cover
 
-    # compute current updates
-    di = -dt * p.tau_syn_inv * state.i
-    i_decayed = state.i + di
-
     # constants
     Keff = 5e5 - (0.5*0.9*4e-7*math.pi*(p.Ms**2)) # effective anisotropy
     Delt = math.sqrt(1.3e-11/Keff) # DW width param (Bloch)
@@ -138,8 +134,10 @@ def _dwmtj_feed_forward_step_jit(
     x_new = (1 - z_new) * x_next + z_new * p.x_reset
     x_new = torch.where(x_new > 0, x_new, torch.tensor(0,dtype=torch.float32,device=torch.device("cuda")))
 
-    # compute current jumps
-    i_new = i_decayed + input_tensor
+    # compute current updates
+    di = -dt * p.tau_syn_inv * state.i
+    i_decayed = state.i + di
+    i_new = input_tensor + i_decayed
 
     return z_new, DWMTJFeedForwardState(x=x_new, i=i_new)
 
@@ -172,4 +170,4 @@ def dwmtj_feed_forward_step(
             x=torch.full_like(input_tensor, jit_params.x_reset),
             i=torch.zeros_like(input_tensor),
         )
-    return _dwmtj_feed_forward_step_jit(input_tensor, state=state, p=jit_params, dt=dt)
+    return _dwmtj_feed_forward_step_jit(input_tensor, state=state, p=jit_params, dt=1e-10)

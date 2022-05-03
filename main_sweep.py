@@ -208,10 +208,10 @@ def save(path, epoch, model, optimizer, is_best=False):
     )
 
 # model parameters
-EPOCHS = 10         # number of iterations
-T = [30]            # list of number of timesteps
-LR = 0.00002        # learning rate
-SEED = 1            # number of seeds to run the network (kept as 1 if manual seed is applied)
+EPOCHS = 5         # number of iterations
+T = [40]            # list of number of timesteps
+LR = 1e-3           # learning rate
+SEED = 2            # number of seeds to run the network (kept as 1 if manual seed is applied)
 MTYPE = 'conv'      # snn type
 
 # cpu is broken, but kept here in case I ever fix it
@@ -227,7 +227,6 @@ w2 = np.linspace(25e-9,25e-9,1)
 
 np.save("./outputs/" + target_dir + "/f_p.npy", np.array(f_poisson))
 
-sac = True      # sacrificial flag, basically the first run will be different from all the rest (not sure why), but this avoids it
 fin_acc = []    # empty array to hold final accuracies
 # sweep variables of interest
 for f in range(0,len(f_poisson)):
@@ -261,16 +260,9 @@ for f in range(0,len(f_poisson)):
             # test_losses.append(test_loss)
             accuracies.append(accuracy)       
             pbar.set_postfix(accuracy=accuracies)
-            if sac: # sacrificial function
-                break
         fin_acc.append(accuracies)
         s += 1
-        if sac: # sacrificial function
-            sac = False
-            fin_acc = []
-            s = 0
-        else: # save outputs every time you finish an epoch
-            np.save("./outputs/" + target_dir + "/fin_acc.npy", np.concatenate(fin_acc))
+        np.save("./outputs/" + target_dir + "/fin_acc.npy", np.concatenate(fin_acc))
 # reshape accuracies to a format that makes sense, then save
-fin_acc = np.concatenate(fin_acc).reshape(len(f_poisson),EPOCHS)
+fin_acc = np.concatenate(fin_acc).reshape(SEED,EPOCHS)
 np.save("./outputs/" + target_dir + "/fin_acc.npy", np.array(fin_acc))
