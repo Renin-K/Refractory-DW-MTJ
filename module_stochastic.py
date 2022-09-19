@@ -87,6 +87,11 @@ class StochCell(SNNCell):
 
     def initial_state(self, input_tensor: torch.Tensor) -> StochFeedForwardState:
         state = StochFeedForwardState(
+            v=torch.zeros(
+                *input_tensor.shape,
+                device=input_tensor.device,
+                dtype=torch.float32,
+            ),
             i=torch.zeros(
                 *input_tensor.shape,
                 device=input_tensor.device,
@@ -125,7 +130,9 @@ def _stoch_feed_forward_step_jit(
 ) -> Tuple[torch.Tensor, StochFeedForwardState]:  # pragma: no cover
     # compute voltage updates
 
-    z_new = torch.sigmoid(p.beta*input_tensor)
+    prob = torch.sigmoid(p.beta*input_tensor-10)
+    sample = torch.rand(prob.shape,device=torch.device("cuda"))
+    z_new = torch.where(prob > sample, torch.ceil(prob), torch.floor(prob))
 
     return z_new, StochFeedForwardState(v=state.v,i=state.i)
 
@@ -150,6 +157,8 @@ def stoch_feed_forward_step_sparse(
     dt: float = 0.001,
 ) -> Tuple[torch.Tensor, StochFeedForwardState]:  # pragma: no cover
 
-    z_new = torch.sigmoid(p.beta*input_tensor)
+    prob = torch.sigmoid(p.beta*input_tensor-10)
+    sample = torch.rand(prob.shape,device=torch.device("cuda"))
+    z_new = torch.where(prob > sample, torch.ceil(prob), torch.floor(prob))
 
     return z_new.to_sparse, StochFeedForwardState(v=state.v,i=state.i)

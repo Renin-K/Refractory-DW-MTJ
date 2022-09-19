@@ -4,6 +4,11 @@ import torchvision
 import os
 import module_gfet as gfet
 
+from norse.torch import LIFParameters, LIFState
+from norse.torch.module.lif import LIFCell, LIFRecurrentCell
+# Notice the difference between "LIF" (leaky integrate-and-fire) and "LI" (leaky integrator)
+from norse.torch import LICell, LIState
+
 from norse.torch.module.leaky_integrator import LILinearCell
 from norse.torch.module import encode
 
@@ -57,8 +62,8 @@ class ConvNet(torch.nn.Module):
         self.features = int(((feature_size - 4) / 2 - 4) / 2)
 
         self.conv1 = torch.nn.Conv2d(num_channels, 20, 5, 1)
-        self.conv2 = torch.nn.Conv2d(20, 50, 5, 1)
-        self.fc1 = torch.nn.Linear(self.features * self.features * 50, 500)
+        self.conv2 = torch.nn.Conv2d(20, 10, 5, 1)
+        self.fc1 = torch.nn.Linear(self.features * self.features * 10, 500)
         self.lif0 = gfet.GFETCell(p=gfet.GFETParameters(method=method, alpha=alpha))
         self.lif1 = gfet.GFETCell(p=gfet.GFETParameters(method=method, alpha=alpha))
         self.lif2 = gfet.GFETCell(p=gfet.GFETParameters(method=method, alpha=alpha))
@@ -82,12 +87,43 @@ class ConvNet(torch.nn.Module):
             z = 10 * self.conv2(z)
             z, s1 = self.lif1(z, s1)
             z = torch.nn.functional.max_pool2d(z, 2, 2)
-            z = z.view(-1, 4 ** 2 * 50)
+            z = z.view(-1, 4 ** 2 * 10)
             z = self.fc1(z)        
             z, s2 = self.lif2(z, s2)
             v, so = self.out(torch.nn.functional.relu(z), so)
             voltages[ts, :, :] = v
         return voltages
+
+class RecNet(torch.nn.Module):
+    def __init__(self, input_features=28*28, hidden_features=80, output_features=10, record=False, dt=0.001):
+        super(RecNet, self).__init__()
+        self.l1 = LIFRecurrentCell(
+            input_features,
+            hidden_features,
+            p=LIFParameters(alpha=80,tau_mem_inv=torch.as_tensor(1.0/1e-2)),
+            dt=dt                     
+        )
+        self.input_features = input_features
+        self.fc_out = torch.nn.Linear(hidden_features, output_features, bias=False)
+        self.out = LICell(dt=dt)
+
+        self.hidden_features = hidden_features
+        self.output_features = output_features
+        self.record = record
+        
+    def forward(self, x):
+        seq_length, batch_size, _, _, _ = x.shape
+        s1 = so = None
+        voltages = []
+
+        for ts in range(seq_length):
+            z = x[ts, :, :, :].view(-1, self.input_features)
+            z, s1 = self.l1(z, s1)
+            z = self.fc_out(z)
+            vo, so = self.out(z, so)
+            voltages += [vo]
+
+        return torch.stack(voltages)
 
 class Model(torch.nn.Module):
     def __init__(self, encoder, snn, decoder):
@@ -149,7 +185,7 @@ def save(path, epoch, model, optimizer, is_best=False):
 
 EPOCHS = 10  
 SEEDS = 5
-T = 48
+T = 50
 LR = 0.001
 
 training_losses = []
@@ -163,8 +199,8 @@ else:
     DEVICE = torch.device("cpu")
 for seed in range(SEEDS):
     model = Model(
-        encoder=encode.ConstantCurrentLIFEncoder(T),
-        snn=ConvNet(alpha=100),
+        encoder=encode.PoissonEncoder(T, f_max=1000),
+        snn=RecNet(),
         decoder=decode
     ).to(DEVICE)
 
@@ -180,7 +216,7 @@ for seed in range(SEEDS):
         accuracies.append(accuracy)       
         pbar.set_postfix(accuracy=accuracies[-1])
 
-accuracies = np.concatenate(accuracies).reshape(SEEDS,EPOCHS)
+accuracies = np.array(accuracies).reshape(SEEDS,EPOCHS)
 os.mkdir("./outputs/" + target_dir)
 np.save("./outputs/" + target_dir + "/training_losses.npy", np.array(training_losses))
 np.save("./outputs/" + target_dir + "/mean_losses.npy", np.array(mean_losses))

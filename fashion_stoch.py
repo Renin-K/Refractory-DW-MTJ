@@ -52,7 +52,7 @@ def decode(x):
 
 class ConvNet(torch.nn.Module):
     def __init__(
-        self,  num_channels=1, feature_size=28, beta=1, method="super", alpha=100
+        self,  num_channels=1, feature_size=28, beta=20, method="super", alpha=100
     ):
         super(ConvNet, self).__init__()
 
@@ -150,7 +150,7 @@ def save(path, epoch, model, optimizer, is_best=False):
     )
 
 EPOCHS = 5  
-T = 48
+T = 40
 LR = 0.001
 
 if torch.cuda.is_available():
@@ -160,7 +160,7 @@ else:
 
 model = Model(
     encoder=encode.ConstantCurrentLIFEncoder(T),
-    snn=ConvNet(alpha=80),
+    snn=ConvNet(alpha=100),
     decoder=decode
 ).to(DEVICE)
 

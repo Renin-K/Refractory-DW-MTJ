@@ -2,10 +2,10 @@ import torch
 import torch.jit
 import math
 import norse
-try:
-    import norse_op
-except ModuleNotFoundError:  # pragma: no cover
-    pass
+# try:
+#     import norse_op
+# except ModuleNotFoundError:  # pragma: no cover
+#     pass
 
 from norse.torch.module.snn import SNNCell
 from typing import NamedTuple, Optional, Tuple
@@ -150,9 +150,9 @@ def _gfet_feed_forward_step_jit(
     # compute voltage updates
     dv = dt * p.tau_mem_inv * ((p.v_leak - state.v) + state.i)
     v_decayed = state.v + dv
-    # torch.where(v_decayed > 0, v_decayed, torch.tensor(0,dtype=torch.float32,
-    #                                               device=torch.device("cuda")))
-
+    v_decayed = torch.where(v_decayed > 0, v_decayed, torch.tensor(0,dtype=torch.float32,
+                                                  device=torch.device("cuda")))
+    # print(v_decayed)
     # compute current updates
     di = -dt * p.tau_syn_inv * state.i
     i_decayed = state.i + di
@@ -205,12 +205,12 @@ def gfet_feed_forward_step(
         p (LIFParameters): parameters of a leaky integrate and fire neuron
         dt (float): Integration timestep to use
     """
-    if norse.utils.IS_OPS_LOADED:
-        try:
-            z, v, i = norse_op.lif_super_feed_forward_step(input_tensor, state, p, dt)
-            return z, GFETFeedForwardState(v=v, i=i)
-        except NameError:  # pragma: no cover
-            pass
+    # if norse.utils.IS_OPS_LOADED:
+    #     try:
+    #         z, v, i = norse_op.lif_super_feed_forward_step(input_tensor, state, p, dt)
+    #         return z, GFETFeedForwardState(v=v, i=i)
+    #     except NameError:  # pragma: no cover
+    #         pass
     jit_params = GFETParametersJIT(
         tau_syn_inv=p.tau_syn_inv,
         tau_mem_inv=p.tau_mem_inv,
