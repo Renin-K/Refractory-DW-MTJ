@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg height="100.8pt" version="1.1" viewBox="0 0 144 100.8" width="144pt" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <metadata>
+  <rdf:RDF xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2022-11-21T12:30:33.623410</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.4.2, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linecap:butt;stroke-linejoin:round;}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 100.8 
+L 144 100.8 
+L 144 0 
+L 0 0 
+z
+" style="fill:#ffffff;"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 34.992 89.712 
+L 112.608 89.712 
+L 112.608 12.096 
+L 34.992 12.096 
+z
+" style="fill:#ffffff;"/>
+   </g>
+   <g clip-path="url(#p3c0e046ad6)">
+    <image height="77.76" id="image4d8ab08b8e" transform="scale(1 -1)translate(0 -77.76)" width="77.76" x="34.992" xlink:href="data:image/png;base64,
+iVBORw0KGgoAAAANSUhEUgAAAGwAAABsCAYAAACPZlfNAAALK0lEQVR4nO2dV4yUxxKFe8yYaEzGmGiTczAGkwUYkzPY7BIFK2Bt4IUnhATCCJBJQiAtsh9giVqbnBaJZJONAZFzTiZjck737b91vrmG19tSn6c+27MzO1vqrr+rTlXHkpKS3jqDPHnyWOp27dolPH/+/NE4Z86cMtelSxfhT548EX7s2DHhBw4cEP7pp58K/+STT6Lxq1evZG7IkCHCv/32W+EVKlQQnjVrVuFt2rQRvnv37mh89+5dmbt48aJw/i1E06ZNhWfJkkX4mTNnonG2bNlkrkyZMsLLlSsn/IN3fnLA/x2CwTxDMJhniH/88cfyA3Lrs5zTPbdq1aoy9+DBA+Hc6zt16iT877//fucf9/jx42j89OlTmZsyZYrwFi1aCK9UqZLwH3/8UfigQYOEL1y4MBp/8cUXMvfZZ58J/+qrr4SvWbNG+JUrV4S3a9dOeEZGRjRu3779O3+XvjisMM8QDOYZgsE8QywzM1POYdzrO3ToIPzWrVvR+Pz58zJXqlQp4ZcvXxZetmxZ4S9fvhR+8+ZN4f369YvGM2bMkDmeX+gf+V787AIFCgjPzMyMxjt37pS5gQMHCud58sKFC+987+vXrwt/+/a//3J+D/rPDz7QNRVWmGcIBvMMwWCeIZaSkiI+7J9//pEXFC1aVPj+/fujcbdu3WTu+fPnwrmXL1q0SPipU6eEJyUlCbexRPoJ+kvu9TZe9784Y3Y///xzNG7UqJHM0a9Uq1ZN+C+//CK8YMGCwukDbQy1cOHCMvfXX38JZ8wzrDDPEAzmGWIZGRmyJa5fv15ekDdvXuGff/55ND506JDMXbp0STi3rZIlSwq/evWq8Bo1agifN29eNGbq5c2bN8K//PJL4dwCua0VK1ZM+OrVq6MxUzFMI927d0+4dRPOOVe+fHnhOXLkEE43Y8Hjx969e4WHFeYZgsE8QzCYZ4g1atRIfFiPHj3kBbNmzRL+7NmzaPzDDz/IHPfmtLQ04XzMp487ceKE8C1btkTjuXPnytyqVauEv3jxQjh9L/0MQ1lLly6NxnxsP378uPABAwa8872LFy8u/PDhw8JtyI6+lN+D6a6wwjxDMJhnCAbzDLFhw4aJD2O4f/HixcKzZ88ejTdu3ChzP/30k/Du3bsLp+yNoSmm4l+/fv2vv1ukSBHh9LWtW7cWvnz5cuH0p/b9a9asKXMMe9Fn5cuXTzglBDxflihRIhpbaYJzzsXjceFME4UV5hmCwTxDMJhniNtzlXPO1atXTzjn7dmJqe+vv/5a+L59+4Qznsf9mpKD3r17R+Pff/9d5mya3Tnnhg4dKjx37tzCGbfs2LGj8EmTJrl/A1MxlE1MnjxZOH0g/e+yZcuiMb8H461r164VHlaYZwgG8wzBYJ4hNn36dNlEmYr/5ptvhNtypP79+8vcggULhPPswzwTU/HDhg0T/v3330djK9t2LlHCfOfOHeFbt24VzvwYZea1atWKxg8fPpS56tWrC6evZUnQhg0bhNM/Wqng7NmzZY6xQ+bewgrzDMFgniEYzDPEt23bJj9o2LCh8HXr1glPTU2Nxjx3TZgwQTjjddR8MBfEz7blS8xvUY5n/YJziRK806dPC6dPzJUrVzTm+ZFlw3369BHOsinmv+jzrG6GccY6deoIZ94vrDDPEAzmGYLBPEOcuRzq/Zj7sZJmlhNZabVziWed2rVrC7d+wznn6tatK9z6PJbA8pzVoEED4fzbqOFgjM6W5FID+d133wmn7uLGjRvCqZE8d+6ccHvWpWaR78Uy5LDCPEMwmGeIM8VB+TWlaCdPnozGXbt2lTk+OjMcdPv2beGUIzBUZWXK7CYzcuRI4aya7Nu3r3DKERh+sq6AlaEHDx4Uzq2drmDPnj3CKZtr3rx5NLYScecSuwnNmTNHeFhhniEYzDMEg3mGBIkAHyPpOxiWsWDK48iRI8KZOqD/nDp1qnBbycgQDv1d48aNhf/xxx/CGbri622JELv/zJw5Uzjn+VmUCDBFYo9SlLFRCsEudWGFeYZgMM8QDOYZYiNGjBCJQMWKFeUFO3bsEG7TGuzWxjQCQzgMe9Efcj+356FChQrJHM9RH330kXCGsgh+TxuCu3btmsxR9m0l5M4lnicp/6Ovtn7Kyradc+7o0aPCt2/fLjysMM8QDOYZgsE8Q6xv377iw3hmYFzN7rmUAEyfPl04y48YY6NMmemWTZs2RePBgwfLHOOUPJexS2jp0qWFUz5tS6M2b94sc5R9M5bI7qi//fabcPo46+tHjx4tc23bthUeyo08RzCYZwgG8wyxhg0biiNhd+r79+8Lt/FAyrp59qE8jCW07H7KeKH1n/Q5lMjRH9LPsCUF4562xQR9Kb8X2zvxJgjmuPi97C0UycnJMsfYIfNjYYV5hmAwzxAM5hli6enpsvkzP7ZixQrhVp5Nv0HdBGVuVg/iXGJrufr16wu3ZT623YRziRJytozgOYznOJ5vbB6Qsjb+Twi2NuKZj9Jv6yNZgkXZIbudhhXmGYLBPEMwmGeI//rrr/ID6hXY9dmW1th2ss4lln82adJEeEpKinCeX9gKyZYE0T/Sf7K0l21cKTlnfs22zGPLWPrxlStXCh81apRwxhIpQbf5Np4X39ehO6wwzxAM5hnilStXlh8wvc1OZjaFzUdtphnmz58vnFJugmkNW5HCCkwbSnIuMUzGSw0o1+P36ty5czTm1s4OBb169RJuL/VxzrkxY8YIp/zdds7mxQKUDLAqJ6wwzxAM5hmCwTxD/H3V+VWqVBFu91T6pGnTpglnFzT6HfoRXiT66NGjaMyKSj562wvbnEuUsbGyv2XLlsKtz6MfoQ9iZxz6NFZ3svubTRt9+OGHMsdqTdonrDDPEAzmGYLBPENswoQJEuNhSIchIesLrI9xLjEEw5semNa3F585l5hKt7/PtDzl0kytk/O8Q0m0PX/aklbnEuUJTM0wzEUfx5CbDf+xVGn8+PHCY7GY8LDCPEMwmGcIBvMMseTkZPFh9A321h/n9GJRltGwGxtLZtnlhfIxSghsnJOlTZSUM9XODjP0BfRDtqyKXeoYM+VtGSy/tV1bnUss17W+ns8B9Hc9e/YUHlaYZwgG8wzBYJ4hzpgbb29gbNHmlehXmIY/duyY8GbNmgn/888/hbPE1pbp2HyVc86NHTtWONsDXbx4UTila4zZtWrVKhozlshSYMb3KG9nmwjKAKxEgFJ4toxgCVdYYZ4hGMwzBIN5hoSu2u8rpbHSM0qteUMtfVZ6erpwnldYAmT3d8Y0Kb8bMWKE8HHjxgl//vy5cObPrO/muYs+jBJ05vUYM2XJrP2/0e/zTMeza1hhniEYzDMEg3mGWJ8+fSSWSAk02ytYSTTzRJR586zDWOH7zju2O7W9rc+5xPjcxIkThbP1LVv/sYTo7t270ZgxUIJnJbZ3ot9nCa6N1zKWyHZOtrzWubDCvEMwmGeIpaamyh7IR3VWhTBUZcEUB7toL1myRDhTN6xktJ12GMbiYzpDanaLcy6x4oTSbltZw62ZVZF8bD979qxwyt/T0tKE20d3/p3sJMdLC8IK8wzBYJ4hGMwzxCkJ4KUyvDjGlt6w0xtDUaxc5AXVlHZTYmfLj2z6w7lEn8auO5RAMxU0fPhw4dZP8SjDTqosXeLNECzZYsjNch5P7KU9ziVekhdWmGcIBvMMwWCeIc79mbcE8WxlfQG7Z/KMRl9gK/WdS0y1M2ViU+88wzHtUKRIEeGUDPCcxnIle4MRfVLJkiWFs9M1fTd9Fv9P9tzGcB3LuyibCCvMMwSDeYZgMM/wH9d0mhwUq/MgAAAAAElFTkSuQmCC" y="-11.952"/>
+   </g>
+   <g id="patch_3">
+    <path d="M 34.992 89.712 
+L 34.992 12.096 
+" style="fill:none;stroke:#000000;stroke-linecap:square;stroke-linejoin:miter;stroke-width:0.8;"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 112.608 89.712 
+L 112.608 12.096 
+" style="fill:none;stroke:#000000;stroke-linecap:square;stroke-linejoin:miter;stroke-width:0.8;"/>
+   </g>
+   <g id="patch_5">
+    <path d="M 34.992 89.712 
+L 112.608 89.712 
+" style="fill:none;stroke:#000000;stroke-linecap:square;stroke-linejoin:miter;stroke-width:0.8;"/>
+   </g>
+   <g id="patch_6">
+    <path d="M 34.992 12.096 
+L 112.608 12.096 
+" style="fill:none;stroke:#000000;stroke-linecap:square;stroke-linejoin:miter;stroke-width:0.8;"/>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p3c0e046ad6">
+   <rect height="77.616" width="77.616" x="34.992" y="12.096"/>
+  </clipPath>
+ </defs>
+</svg>

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg height="100.8pt" version="1.1" viewBox="0 0 144 100.8" width="144pt" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <metadata>
+  <rdf:RDF xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2022-11-21T12:29:27.270284</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.4.2, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linecap:butt;stroke-linejoin:round;}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 100.8 
+L 144 100.8 
+L 144 0 
+L 0 0 
+z
+" style="fill:#ffffff;"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 34.992 89.712 
+L 112.608 89.712 
+L 112.608 12.096 
+L 34.992 12.096 
+z
+" style="fill:#ffffff;"/>
+   </g>
+   <g clip-path="url(#p09a73365e5)">
+    <image height="77.76" id="image9d1b7da33a" transform="scale(1 -1)translate(0 -77.76)" width="77.76" x="34.992" xlink:href="data:image/png;base64,
+iVBORw0KGgoAAAANSUhEUgAAAGwAAABsCAYAAACPZlfNAAAFKklEQVR4nO2cuUssTRTFa3Tcd9wNFMENRAQDBWPBSAMzQ801Esz8KwzMDAwMzEzEJRMzMRBcQAMDd9z33Zf1V/f47P4aeXzvfJxfVMdyemrmUHX73qqehHPu0wkaUv7rAYh4yDAyZBgZMowMGUaGDCNDhpEhw8iQYWTIMDJkGBkyjAwZRoYMI0OGkSHDyJBhZMgwMmQYGTKMDBlGhgwjIxn3Bbm5uUG7o6PD9DU0NBjd2dlpdFlZmdH5+flG5+TkGJ1IJIL256c9jffx8WH0xcWF0dvb20YvLi4aPTc3Z/TT05P7t8zOzhpdXV1t9NnZmdG3t7ff6re3N9P3/Pxs9MjIiNGaYWTIMDJkGBmJwsJCExyGh4fNP7S0tBhdVFT07cVwPca1G+MM6uvra6PT09P/GagXz5xzrri42OjGxkajs7OzjcZ4iTGxtbU1aK+vr5u+vb09o7u6uozOyMgIvTbif08HBwem7+bmxujBwUGjNcPIkGFkyDAyku3t7eYPzc3NRm9ubhp9dHQUtDFnSE1NNfrl5SW0H0lLSzPaj2Hv7++mD/Omw8NDo7OysowuKSkxGuPO1tZW0C4vLzd9eXl5Rq+trRkd9bnu7++N9uMrfo7X11ej7+7ujNYMI0OGkSHDyEguLCyYP2CNrqqqymh/jcXaYEqK9R+vhf2o/Tqlc85lZmYGbczDMAZdXl7Gem/sPz4+DtpYCzw9PTW6vr7ehYH5JcbygoKCoI2xtra21ugv33HoO4u/DhlGhgwj48t+2NLSktGYk9TU1ARtf9137ut+VtT6jPU+zEH862MMwpwN3wtjFOYzYTki1ksx30Tt54u/A6/na8zRcFzJpLVIM4wMGUZGEssqWAI6OTkJ1XEoLS012l9enXOuqanJ6MrKyqCNSwVuxeC4cTsFl1tcjv3lHJdbPAJwdXVl9MPDQ+i1cTn2UxBMZTDMnJ+fG60ZRoYMI0OGkZFwEb/mhrfTPrgVjuUjvLWOi18W6+vrM314G4/lIIwNeOuNRwz87RcsReHWDILfEd6KYxzyx4KfA0tRvb299r1CRyL+OmQYGTKMjMij2nHiEMa0qO0UzJ3w9f62//j4uOkbGBgwGo+54ZGBqCMFfrzEWIx5FuZpmHfh1g/mun7Oh+W8lZUVF4ZmGBkyjAwZRkbsx418cK2PeiQobl7mr/0Y7yYnJ43u7+83uq2tzWg8moZx6PHxMWhjHRJzPMzLMIZhzIrKV33m5+e/7XNOM4wOGUaGDCPjRzEs6rGaqBiHeRn2+3Erat9uenraaDyeV1FRYTTmZf4eF+7TYW0Qx4KPWUXFar8fjwjs7OyEvlYzjAwZRoYMI+NHMSyKqBgXJy/DmBV19HpiYsLosbExo/Gomp+HYXzDo354LBzHgvVB3Ivzz6fgODCmIZphZMgwMmQYGX80hv1JMGZhroSxYGZmxuienh6j/biFP1fhPx70u/fGWL2xsWE0nh/xa5X7+/suDpphZMgwMmiXRARv+5HV1VWj6+rqjPZ/mQ7LQ0NDQz8aGx5d6+7uDtp4HC8KzTAyZBgZMoyM/00MQ6JKV8vLy0b7WyT4a6U/BY9+T01NBe3R0dFY19IMI0OGkSHDyIh83Eh8PRIQVZpC8Oi2v6WC+eDu7m7otTTDyJBhZMgwMhTDyNAMI0OGkSHDyJBhZMgwMmQYGTKMDBlGhgwjQ4aRIcPIkGFkyDAyZBgZMowMGUaGDCNDhpEhw8iQYWTIMDJkGBkyjAwZRoYMI0OGkfELvcPDuzvxf18AAAAASUVORK5CYII=" y="-11.952"/>
+   </g>
+   <g id="patch_3">
+    <path d="M 34.992 89.712 
+L 34.992 12.096 
+" style="fill:none;stroke:#000000;stroke-linecap:square;stroke-linejoin:miter;stroke-width:0.8;"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 112.608 89.712 
+L 112.608 12.096 
+" style="fill:none;stroke:#000000;stroke-linecap:square;stroke-linejoin:miter;stroke-width:0.8;"/>
+   </g>
+   <g id="patch_5">
+    <path d="M 34.992 89.712 
+L 112.608 89.712 
+" style="fill:none;stroke:#000000;stroke-linecap:square;stroke-linejoin:miter;stroke-width:0.8;"/>
+   </g>
+   <g id="patch_6">
+    <path d="M 34.992 12.096 
+L 112.608 12.096 
+" style="fill:none;stroke:#000000;stroke-linecap:square;stroke-linejoin:miter;stroke-width:0.8;"/>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p09a73365e5">
+   <rect height="77.616" width="77.616" x="34.992" y="12.096"/>
+  </clipPath>
+ </defs>
+</svg>

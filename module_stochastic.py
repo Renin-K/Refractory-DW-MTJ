@@ -2,6 +2,7 @@ import torch
 import torch.jit
 import math
 import norse
+from torch_interp1d import Interp1d
 
 from norse.torch.module.snn import SNNCell
 from typing import NamedTuple, Optional, Tuple
@@ -150,6 +151,9 @@ def stoch_feed_forward_step(
     )
     return _stoch_feed_forward_step_jit(input_tensor, state=state, p=jit_params, dt=dt)
 
+x = torch.tensor([0.5,1.000,1.100,1.250,1.400,1.500,1.600,1.750,1.825,1.900,2.000,2.200],device=torch.device("cuda"))
+y = torch.tensor([0.001,0.025974025974025976, 0.023391812865497075, 0.02527075812274368, 0.017241379310344827, 0.09042553191489362, 
+    0.07692307692307693, 0.09433962264150944, 0.17391304347826086, 0.6521739130434783, 0.9333333333333333, 0.999],device=torch.device("cuda"))
 def stoch_feed_forward_step_sparse(
     input_tensor: torch.Tensor,
     state: StochFeedForwardState,
@@ -157,7 +161,10 @@ def stoch_feed_forward_step_sparse(
     dt: float = 0.001,
 ) -> Tuple[torch.Tensor, StochFeedForwardState]:  # pragma: no cover
 
-    prob = torch.sigmoid(p.beta*input_tensor-10)
+    scale = 1
+    new_in = input_tensor/(p.beta*scale) + 1.88
+    prob = Interp1d()(x,y,new_in)
+    # prob = torch.sigmoid(input_tensor)
     sample = torch.rand(prob.shape,device=torch.device("cuda"))
     z_new = torch.where(prob > sample, torch.ceil(prob), torch.floor(prob))
 
