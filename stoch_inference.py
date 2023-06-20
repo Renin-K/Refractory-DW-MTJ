@@ -6,9 +6,9 @@ import os
 from noise_transform import AddGaussianNoise
 
 from module_stochastic import StochParameters
-from module_stochastic import StochCell
+from module_stochastic import StochCell,StochMWCell
 
-from norse.torch.module.leaky_integrator import LI,LILinearCell
+from norse.torch.module.leaky_integrator import LInoweight,LILinearCell
 from norse.torch import LIFParameters,LIParameters
 from norse.torch.module.lif import LIFCell
 from norse.torch.module import encode
@@ -17,18 +17,17 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm, trange
 
 # folder to save results
-target_dir = "1115_inf_lif"
+target_dir = "230112_inf_neurmw"
 if not os.path.isdir("./outputs/" + target_dir):
     os.mkdir("./outputs/" + target_dir)
-load_dir = "1111_s05_fashion_noise0.0_seqnet0500_lif_ep10_lr1e-3_T50_alpha100_beta25_pf1e3_noclip_nodecay_bn_initxunif"
+load_dir = "230103_s05_fashion_noise0.0_seqnet0500_neurmw_ep20_lr0.001_T80_alpha100_beta5_pf1e3_bn_initxunif"
 
 BATCH_SIZE = 100
-EPOCHS = 10
-T = 50
+EPOCHS = 20
+T = 80
 LR = 1e-3
-k = 15
 alpha = 100
-beta = 25
+beta = 5
 f_poisson = 1e3
 seeds = 5
 clipflag = False
@@ -71,7 +70,6 @@ test_loader = torch.utils.data.DataLoader(
 dataiter = iter(test_loader)
 images,labels = dataiter.next()
 figim,axim = plt.subplots(1,1,figsize=(2,1.4))
-print(images[0])
 axim.imshow((images[0].reshape(28,28)),cmap='gray')
 axim.get_xaxis().set_visible(False)
 axim.get_yaxis().set_visible(False)
@@ -89,15 +87,18 @@ class SeqNet(torch.nn.Module):
         self.bn0 = torch.nn.BatchNorm1d(h1)
         self.bn1 = torch.nn.BatchNorm1d(h2)
         self.bnout = torch.nn.BatchNorm1d(10)
+        self.stoch0 = StochMWCell(p=StochParameters(beta=beta,method=method, alpha=alpha))
+        self.stoch1 = StochMWCell(p=StochParameters(beta=beta,method=method, alpha=alpha))
+        self.stoch2 = StochMWCell(p=StochParameters(beta=beta,method=method, alpha=alpha))
         # self.stoch0 = StochCell(p=StochParameters(beta=beta,method=method, alpha=alpha))
         # self.stoch1 = StochCell(p=StochParameters(beta=beta,method=method, alpha=alpha))
         # self.stoch2 = StochCell(p=StochParameters(beta=beta,method=method, alpha=alpha))
-        self.stoch0 = LIFCell(p=LIFParameters(method=method, alpha=alpha))
-        self.stoch1 = LIFCell(p=LIFParameters(method=method, alpha=alpha))
-        self.stoch2 = LIFCell(p=LIFParameters(method=method, alpha=alpha))
+        # self.stoch0 = LIFCell(p=LIFParameters(method=method, alpha=alpha))
+        # self.stoch1 = LIFCell(p=LIFParameters(method=method, alpha=alpha))
+        # self.stoch2 = LIFCell(p=LIFParameters(method=method, alpha=alpha))
         #self.stochfc = LIFCell(p=LIFParameters(method=method, alpha=alpha))
         #self.out = LILinearCell(h2,10,p=LIFParameters(method=method, alpha=alpha))
-        self.out = LI()
+        self.out = LInoweight()
         # self.out = StochCell(p=StochParameters(beta=beta,method=method, alpha=alpha))
 
     def forward(self, x):

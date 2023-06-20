@@ -39,11 +39,11 @@ class GFETFeedForwardState(NamedTuple):
     """State of a feed forward LIF neuron
 
     Parameters:
-        v (torch.Tensor): membrane potential
+        g (torch.Tensor): membrane potential
         i (torch.Tensor): synaptic input current
     """
 
-    v: torch.Tensor
+    g: torch.Tensor
     i: torch.Tensor
 
 class GFETCell(SNNCell):

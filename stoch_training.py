@@ -6,9 +6,9 @@ import os
 from noise_transform import AddGaussianNoise
 
 from module_stochastic import StochParameters
-from module_stochastic import StochCell
+from module_stochastic import StochCell,StochMWCell
 
-from norse.torch.module.leaky_integrator import LI,LILinearCell
+from norse.torch.module.leaky_integrator import LInoweight,LILinearCell
 from norse.torch import LIFParameters,LIParameters
 from norse.torch.module.lif import LIFCell
 from norse.torch.module import encode
@@ -16,17 +16,16 @@ from norse.torch.module import encode
 from tqdm import tqdm, trange
 
 # folder to save results
-target_dir = "1115_s05_fashion_noise0.0_seqnet0500_lif_ep10_lr1e-3_T50_alpha100_beta25_pf1e3_noclip_nodecay_bn_initxunif"
+target_dir = "230118_s05_fashion_noise0.0_seqnet0500_neurmw_ep20_lr0.001_T40_alpha100_beta1_pf1e3_bn_initxunif"
 if not os.path.isdir("./outputs/" + target_dir):
     os.mkdir("./outputs/" + target_dir)
 
 BATCH_SIZE = 100
-EPOCHS = 10
-T = 50
-LR = 1e-3
-k = 15
+EPOCHS = 20
+T = 40
+LR = 0.001
 alpha = 100
-beta = 25
+beta = 5
 f_poisson = 1e3
 seeds = 5
 clipflag = False
@@ -93,53 +92,6 @@ def decode(x):
     log_p_y = torch.nn.functional.log_softmax(x, dim=1)
     return log_p_y
 
-class ConvNet(torch.nn.Module):
-    def __init__(
-        self,  num_channels=1, feature_size=28, beta=20, method="super", alpha=100, k=1
-    ):
-        super(ConvNet, self).__init__()
-
-        self.features = int(((feature_size - 4) / 2 - 4) / 2)
-
-        self.conv1 = torch.nn.Conv2d(num_channels, 20, 5, 1)
-        self.conv2 = torch.nn.Conv2d(20, 50, 5, 1)
-        self.fc1 = torch.nn.Linear(self.features * self.features * 50, 500)
-        self.fc2 = torch.nn.Linear(500, 10)
-        self.stoch0 = StochCell(p=StochParameters(beta=beta,method=method, alpha=alpha))
-        self.stoch1 = StochCell(p=StochParameters(beta=beta,method=method, alpha=alpha))
-        self.stochfc = StochCell(p=StochParameters(beta=beta,method=method, alpha=alpha))
-        #self.stochfc = LIFCell(p=LIFParameters(method=method, alpha=alpha))
-        self.out = LILinearCell(500, 10)
-        # self.out = StochCell(p=StochParameters(beta=beta,method=method, alpha=alpha))
-        self.k = k
-
-    def forward(self, x):
-        seq_length = x.shape[0]
-        batch_size = x.shape[1]
-        
-        # specify the initial states
-        s0 = s1 = s2 = so = None
-
-        voltages = torch.zeros(
-            seq_length, batch_size, 10, device=x.device, dtype=x.dtype
-        )
-
-        for ts in range(seq_length):
-            z = self.conv1(x[ts, :])
-            z, s0 = self.stoch0(z, s0)
-            z = torch.nn.functional.max_pool2d(z, 2, 2)
-            z = self.k * self.conv2(z)
-            z, s1 = self.stoch1(z, s1)
-            z = torch.nn.functional.max_pool2d(z, 2, 2)
-            z = z.view(-1, 4 ** 2 * 50)
-            z = self.fc1(z)        
-            z, s2 = self.stochfc(z, s2)
-            # v = torch.nn.functional.relu(z)
-            # z = self.fc2(z)
-            v, so = self.out(torch.nn.functional.relu(z), so)
-            voltages[ts, :, :] = v
-        return voltages
-
 class SeqNet(torch.nn.Module):
     def __init__(
         self,  h1=1000, h2=1000, feature_size=28, beta=20, method="super", alpha=100
@@ -152,15 +104,15 @@ class SeqNet(torch.nn.Module):
         self.bn0 = torch.nn.BatchNorm1d(h1)
         self.bn1 = torch.nn.BatchNorm1d(h2)
         self.bnout = torch.nn.BatchNorm1d(10)
-        self.stoch0 = StochCell(p=StochParameters(beta=beta,method=method, alpha=alpha))
-        self.stoch1 = StochCell(p=StochParameters(beta=beta,method=method, alpha=alpha))
-        self.stoch2 = StochCell(p=StochParameters(beta=beta,method=method, alpha=alpha))
-        # self.stoch0 = LIFCell(p=LIFParameters(method=method, alpha=alpha))
-        # self.stoch1 = LIFCell(p=LIFParameters(method=method, alpha=alpha))
-        # self.stoch2 = LIFCell(p=LIFParameters(method=method, alpha=alpha))
-        #self.stochfc = LIFCell(p=LIFParameters(method=method, alpha=alpha))
-        #self.out = LILinearCell(h2,10,p=LIFParameters(method=method, alpha=alpha))
-        self.out = LI()
+        # self.stoch0 = StochCell(p=StochParameters(beta=beta,method=method, alpha=alpha))
+        # self.stoch1 = StochCell(p=StochParameters(beta=beta,method=method, alpha=alpha))
+        # self.stoch2 = StochCell(p=StochParameters(beta=beta,method=method, alpha=alpha))
+        self.stoch0 = LIFCell(p=LIFParameters(method=method, alpha=alpha))
+        self.stoch1 = LIFCell(p=LIFParameters(method=method, alpha=alpha))
+        self.stoch2 = LIFCell(p=LIFParameters(method=method, alpha=alpha))
+        # self.stochfc = LIFCell(p=LIFParameters(method=method, alpha=alpha))
+        # self.out = LILinearCell(h2,10,p=LIFParameters(method=method, alpha=alpha))
+        self.out = LInoweight(p=LIFParameters(method=method, alpha=alpha))
         # self.out = StochCell(p=StochParameters(beta=beta,method=method, alpha=alpha))
 
     def forward(self, x):
@@ -176,14 +128,111 @@ class SeqNet(torch.nn.Module):
 
         for ts in range(seq_length):
             z = self.fc0(x[ts, :].view(-1,28*28))
-            z = self.bn0(z)
             z, s0 = self.stoch0(z, s0)
+            z = self.bn0(z)
             # print(z)
             z = self.fc1(z)
-            z = self.bn1(z)
             z, s1 = self.stoch1(z, s1)
+            z = self.bn1(z)
             z = self.fc2(z)        
-            z = self.bnout(z)
+            # z = self.bnout(z)
+            v, so = self.out(z, so)
+            voltages[ts, :, :] = v
+        return voltages
+
+class StochNet(torch.nn.Module):
+    def __init__(
+        self,  h1=1000, h2=1000, feature_size=28, beta=20, method="super", alpha=100
+    ):
+        super(StochNet, self).__init__()
+
+        self.fc0 = torch.nn.Linear(feature_size*feature_size, h1)
+        self.fc1 = torch.nn.Linear(h1, h2)
+        self.fc2 = torch.nn.Linear(h2, 10)
+        self.bn0 = torch.nn.BatchNorm1d(h1)
+        self.bn1 = torch.nn.BatchNorm1d(h2)
+        self.bnout = torch.nn.BatchNorm1d(10)
+        self.stoch0 = StochCell(p=StochParameters(beta=beta,method=method, alpha=alpha))
+        self.stoch1 = StochCell(p=StochParameters(beta=beta,method=method, alpha=alpha))
+        self.stoch2 = StochCell(p=StochParameters(beta=beta,method=method, alpha=alpha))
+        # self.stoch0 = LIFCell(p=LIFParameters(method=method, alpha=alpha))
+        # self.stoch1 = LIFCell(p=LIFParameters(method=method, alpha=alpha))
+        # self.stoch2 = LIFCell(p=LIFParameters(method=method, alpha=alpha))
+        # self.stochfc = LIFCell(p=LIFParameters(method=method, alpha=alpha))
+        # self.out = LILinearCell(h2,10,p=LIFParameters(method=method, alpha=alpha))
+        self.out = LInoweight(p=LIFParameters(method=method, alpha=alpha))
+        # self.out = StochCell(p=StochParameters(beta=beta,method=method, alpha=alpha))
+
+    def forward(self, x):
+        seq_length = x.shape[0]
+        batch_size = x.shape[1]
+        
+        # specify the initial states
+        s0 = s1 = s2 = so = None
+
+        voltages = torch.zeros(
+            seq_length, batch_size, 10, device=x.device, dtype=x.dtype
+        )
+
+        for ts in range(seq_length):
+            z = self.fc0(x[ts, :].view(-1,28*28))
+            z, s0 = self.stoch0(z, s0)
+            z = self.bn0(z)
+            # print(z)
+            z = self.fc1(z)
+            z, s1 = self.stoch1(z, s1)
+            z = self.bn1(z)
+            z = self.fc2(z)        
+            # z = self.bnout(z)
+            v, so = self.out(z, so)
+            voltages[ts, :, :] = v
+        return voltages
+
+
+class SeqNetMW(torch.nn.Module):
+    def __init__(
+        self,  h1=1000, h2=1000, feature_size=28, beta=beta, method="super", alpha=100
+    ):
+        super(SeqNetMW, self).__init__()
+
+        self.fc0 = torch.nn.Linear(feature_size*feature_size, h1)
+        self.fc1 = torch.nn.Linear(h1, h2)
+        self.fc2 = torch.nn.Linear(h2, 10)
+        self.bn0 = torch.nn.BatchNorm1d(h1)
+        self.bn1 = torch.nn.BatchNorm1d(h2)
+        self.bnout = torch.nn.BatchNorm1d(10)
+        self.stoch0 = StochMWCell(p=StochParameters(beta=beta,method=method, alpha=alpha))
+        self.stoch1 = StochMWCell(p=StochParameters(beta=beta,method=method, alpha=alpha))
+        self.stoch2 = StochMWCell(p=StochParameters(beta=beta,method=method, alpha=alpha))
+        # self.stoch0 = LIFCell(p=LIFParameters(method=method, alpha=alpha))
+        # self.stoch1 = LIFCell(p=LIFParameters(method=method, alpha=alpha))
+        # self.stoch2 = LIFCell(p=LIFParameters(method=method, alpha=alpha))
+        # self.stochfc = LIFCell(p=LIFParameters(method=method, alpha=alpha))
+        # self.out = LILinearCell(h2,10,p=LIFParameters(method=method, alpha=alpha))
+        self.out = LInoweight()
+        # self.out = StochCell(p=StochParameters(beta=beta,method=method, alpha=alpha))
+
+    def forward(self, x):
+        seq_length = x.shape[0]
+        batch_size = x.shape[1]
+        
+        # specify the initial states
+        s0 = s1 = s2 = so = None
+
+        voltages = torch.zeros(
+            seq_length, batch_size, 10, device=x.device, dtype=x.dtype
+        )
+
+        for ts in range(seq_length):
+            z = self.fc0(x[ts, :].view(-1,28*28))
+            z, s0 = self.stoch0(z, s0)
+            z = self.bn0(z)
+            # print(z)
+            z = self.fc1(z)
+            z, s1 = self.stoch1(z, s1)
+            z = self.bn1(z)
+            z = self.fc2(z)        
+            # z = self.bnout(z)
             v, so = self.out(z, so)
             voltages[ts, :, :] = v
         return voltages
@@ -311,7 +360,8 @@ accuracies = []
 highest = 0
 for i in range(seeds):
     # torch.manual_seed(i)
-    snn = SeqNet(h1=hidden,h2=hidden,beta=beta,alpha=alpha)
+    # snn = SeqNet(h1=hidden,h2=hidden,beta=beta,alpha=alpha)
+    snn = SeqNetMW(h1=hidden,h2=hidden,beta=beta,alpha=alpha)
     # snn = SeqNetSmall(h1=hidden,beta=beta,alpha=alpha)
     snn.apply(initialize_weights)
     model = Model(
