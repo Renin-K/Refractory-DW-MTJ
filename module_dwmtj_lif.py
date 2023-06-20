@@ -28,7 +28,7 @@ class DWMTJParameters(NamedTuple):
     x_th: torch.Tensor = torch.as_tensor(200e-9)
     x_reset: torch.Tensor = torch.as_tensor(0.0e-9)
     method: str = "super"
-    alpha: torch.Tensor = torch.as_tensor(150.0)
+    alpha: torch.Tensor = torch.as_tensor(100.0)
 
 class DWMTJFeedForwardState(NamedTuple):
     """State of a feed forward DWMTJ

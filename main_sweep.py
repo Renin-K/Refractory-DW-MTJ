@@ -17,7 +17,7 @@ torch.manual_seed(5)    # use this for the convolutional network
 BATCH_SIZE = 100
 
 # folder to save results
-target_dir = "100422_fp_sweep0"
+target_dir = "230620_temp"
 
 # if folder does not exist, create it
 if not os.path.isdir("./outputs/"):
@@ -65,7 +65,7 @@ def decode(x):
 # define convolutional network class
 class ConvNet(torch.nn.Module):
     def __init__( self,  num_channels=1, feature_size=28, method="super", 
-                alpha=100, Hleak=0, w2=25e-9, I=100e-6):
+                alpha=100, Hleak=0, w2=25e-9, I=100e-6, x_th = 0e9):
         super(ConvNet, self).__init__()
 
         self.features = int(((feature_size - 4) / 2 - 4) / 2)               # features at the output of convolution
@@ -74,13 +74,13 @@ class ConvNet(torch.nn.Module):
         self.fc1 = torch.nn.Linear(self.features * self.features * 50, 500) # fully connected layer after convolution
         # dwmtj neuron layers
         self.dwmtj0 = dwmtj.DWMTJCell(p=dwmtj.DWMTJParameters(
-            method=method,alpha=alpha,H=torch.as_tensor(Hleak),w2=torch.as_tensor(w2),I=torch.as_tensor(I))
+            method=method,alpha=alpha,H=torch.as_tensor(Hleak),w2=torch.as_tensor(w2),I=torch.as_tensor(I),x_th=torch.as_tensor(x_th))
             )
         self.dwmtj1 = dwmtj.DWMTJCell(p=dwmtj.DWMTJParameters(
-            method=method,alpha=alpha,H=torch.as_tensor(Hleak),w2=torch.as_tensor(w2),I=torch.as_tensor(I))
+            method=method,alpha=alpha,H=torch.as_tensor(Hleak),w2=torch.as_tensor(w2),I=torch.as_tensor(I),x_th=torch.as_tensor(x_th))
             )
         self.dwmtj2 = dwmtj.DWMTJCell(p=dwmtj.DWMTJParameters(
-            method=method,alpha=alpha,H=torch.as_tensor(Hleak),w2=torch.as_tensor(w2),I=torch.as_tensor(I))
+            method=method,alpha=alpha,H=torch.as_tensor(Hleak),w2=torch.as_tensor(w2),I=torch.as_tensor(I),x_th=torch.as_tensor(x_th))
             )
         # output layer
         self.out = LILinearCell(500, 10)
@@ -211,7 +211,7 @@ def save(path, epoch, model, optimizer, is_best=False):
 EPOCHS = 5         # number of iterations
 T = [40]            # list of number of timesteps
 LR = 1e-3           # learning rate
-SEED = 2            # number of seeds to run the network (kept as 1 if manual seed is applied)
+SEED = 1            # number of seeds to run the network (kept as 1 if manual seed is applied)
 MTYPE = 'conv'      # snn type
 
 # cpu is broken, but kept here in case I ever fix it
@@ -221,6 +221,7 @@ else:
     DEVICE = torch.device("cpu")
 
 # sweep parameters (define as needed)
+sweep_len = 1
 f_poisson = np.linspace(10e9,10e9,1)
 w2 = np.linspace(25e-9,25e-9,1)
 #T = np.linspace(5,80,16)
@@ -229,17 +230,17 @@ np.save("./outputs/" + target_dir + "/f_p.npy", np.array(f_poisson))
 
 fin_acc = []    # empty array to hold final accuracies
 # sweep variables of interest
-for f in range(0,len(f_poisson)):
+for f in range(0,len(w2)):
     #for h in range(0,len(T)):
     # seed counter
     s = 0   
     while s < SEED:
-        torch.manual_seed(5)    # set torch manual seed (convolutional)
+        torch.manual_seed(s)    # set torch manual seed (convolutional)
 
         if MTYPE == 'rec':
             snn = RecNet(28*28, 100, 10)
         elif MTYPE == 'conv':
-            snn = ConvNet(alpha=100,w2=25e-9)
+            snn = ConvNet(alpha=100,w2=w2[f])
 
         model = Model( # instantiate a model
             encoder=encode.PoissonEncoder(seq_length=int(T[0]),dt=1e-10,f_max=f_poisson[f]),
@@ -264,5 +265,5 @@ for f in range(0,len(f_poisson)):
         s += 1
         np.save("./outputs/" + target_dir + "/fin_acc.npy", np.concatenate(fin_acc))
 # reshape accuracies to a format that makes sense, then save
-fin_acc = np.concatenate(fin_acc).reshape(SEED,EPOCHS)
+fin_acc = np.concatenate(fin_acc).reshape(SEED,sweep_len)
 np.save("./outputs/" + target_dir + "/fin_acc.npy", np.array(fin_acc))
