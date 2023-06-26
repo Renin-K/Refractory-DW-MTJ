@@ -17,16 +17,22 @@ class DWMTJParameters(NamedTuple):
     """
 
     tau_syn_inv: torch.Tensor = torch.as_tensor(1.0/5e-10)
-    w1: torch.Tensor = torch.as_tensor(25e-9)
-    w2: torch.Tensor = torch.as_tensor(25e-9)
+    #Width 1
+    w1: torch.Tensor = torch.as_tensor(25e-9) #tested 25 to 50
+    #Width 2
+    w2: torch.Tensor = torch.as_tensor(25e-9) #tested 50 to 75
     d: torch.Tensor = torch.as_tensor(1.5e-9)
     P: torch.Tensor = torch.as_tensor(0.7)
     Ms: torch.Tensor = torch.as_tensor(8e5)
     a: torch.Tensor = torch.as_tensor(0.05)
-    H: torch.Tensor = torch.as_tensor(0.0)
-    I: torch.Tensor = torch.as_tensor(80e-6)
-    x_th: torch.Tensor = torch.as_tensor(200e-9)
-    x_reset: torch.Tensor = torch.as_tensor(0.0e-9)
+    #External Magnetic Field
+    H: torch.Tensor = torch.as_tensor(0.0) #tested 
+    #Input current
+    I: torch.Tensor = torch.as_tensor(80e-6) #tested 10 to 80
+    #Threshold Location
+    x_th: torch.Tensor = torch.as_tensor(200e-9) #tested 125 to 200
+    #Reset Location
+    x_reset: torch.Tensor = torch.as_tensor(0.0e-9) #tested 0 to 180
     method: str = "super"
     alpha: torch.Tensor = torch.as_tensor(100.0)
 
