@@ -1,5 +1,6 @@
 import os 
 import torch
+import math
 import numpy as np
 import torchvision
 import module_dwmtj_lif as dwmtj
@@ -15,7 +16,9 @@ from tqdm import tqdm, trange
 torch.manual_seed(5)    # use this for the convolutional network
 
 BATCH_SIZE = 100
-
+z_array = [1] * 2
+np.array(z_array)
+outsideTracker = 0
 # folder to save results
 target_dir = "230620_temp"
 
@@ -74,13 +77,13 @@ class ConvNet(torch.nn.Module):
         self.fc1 = torch.nn.Linear(self.features * self.features * 50, 500) # fully connected layer after convolution
         # dwmtj neuron layers
         self.dwmtj0 = dwmtj.DWMTJCell(p=dwmtj.DWMTJParameters(
-            method=method,alpha=alpha,H=torch.as_tensor(Hleak),w2=torch.as_tensor(w2),I=torch.as_tensor(I),x_th=torch.as_tensor(x_th),x_reset =torch.as_tensor(x_reset))
+            method=method,alpha=alpha,H=torch.as_tensor(Hleak),w1=torch.as_tensor(w1), w2=torch.as_tensor(w2),I=torch.as_tensor(I),x_th=torch.as_tensor(x_th),x_reset =torch.as_tensor(x_reset))
             )
         self.dwmtj1 = dwmtj.DWMTJCell(p=dwmtj.DWMTJParameters(
-            method=method,alpha=alpha,H=torch.as_tensor(Hleak),w2=torch.as_tensor(w2),I=torch.as_tensor(I),x_th=torch.as_tensor(x_th),x_reset =torch.as_tensor(x_reset))
+            method=method,alpha=alpha,H=torch.as_tensor(Hleak),w1=torch.as_tensor(w1), w2=torch.as_tensor(w2),I=torch.as_tensor(I),x_th=torch.as_tensor(x_th),x_reset =torch.as_tensor(x_reset))
             )
         self.dwmtj2 = dwmtj.DWMTJCell(p=dwmtj.DWMTJParameters(
-            method=method,alpha=alpha,H=torch.as_tensor(Hleak),w2=torch.as_tensor(w2),I=torch.as_tensor(I),x_th=torch.as_tensor(x_th),x_reset =torch.as_tensor(x_reset))
+            method=method,alpha=alpha,H=torch.as_tensor(Hleak),w1=torch.as_tensor(w1), w2=torch.as_tensor(w2),I=torch.as_tensor(I),x_th=torch.as_tensor(x_th),x_reset =torch.as_tensor(x_reset))
             )
         # output layer
         self.out = LILinearCell(500, 10)
@@ -145,6 +148,59 @@ class RecNet(torch.nn.Module):
 
         return torch.stack(voltages)
 
+# define recurrent network class
+class MLPNet(torch.nn.Module):
+    def __init__(self, input_features=28*28, hidden_features1 = 500,hidden_features2 = 100, out_features = 10, method="super", 
+                alpha=100, Hleak=0, w1 = 25e-9, w2= 35e-9, I =  20e-6, x_th = 100e-9, x_reset = 0.0e-9): #30,30,40,100,0
+        super(MLPNet, self).__init__()
+
+        self.input_features = input_features
+
+        self.fc1 = torch.nn.Linear(input_features, hidden_features1)
+        self.fc2 = torch.nn.Linear(hidden_features1, hidden_features2)
+        self.bn1 = torch.nn.BatchNorm1d(hidden_features1)
+        self.bn2 = torch.nn.BatchNorm1d(hidden_features2)
+        self.out = LILinearCell(hidden_features2, out_features)
+
+        self.dwmtj0 = dwmtj.DWMTJCell(p=dwmtj.DWMTJParameters(
+            method=method,alpha=alpha,H=torch.as_tensor(Hleak),w1=torch.as_tensor(w1), w2=torch.as_tensor(w2),I=torch.as_tensor(I),x_th=torch.as_tensor(x_th),x_reset =torch.as_tensor(x_reset))
+            )
+        self.dwmtj1 = dwmtj.DWMTJCell(p=dwmtj.DWMTJParameters(
+            method=method,alpha=alpha,H=torch.as_tensor(Hleak),w1=torch.as_tensor(w1), w2=torch.as_tensor(w2),I=torch.as_tensor(I),x_th=torch.as_tensor(x_th),x_reset =torch.as_tensor(x_reset))
+            )
+        
+    def forward(self, x):
+        # extract sequence length and batch_size from input data
+        seq_length = x.shape[0]
+        batch_size = x.shape[1]
+        
+        # specify the initial neuron states
+        s0 = s1 = so = None
+
+        # initialize output voltages
+        voltages = torch.zeros(
+            seq_length, batch_size, 10, device=x.device, dtype=x.dtype
+        )
+
+        # feed forward steps of the neural network
+        for ts in range(seq_length):
+            global outsideTracker
+            outsideTracker += 1
+            z = x[ts, :].view(-1, self.input_features)
+            z = self.fc1(z)
+            z, s0 = self.dwmtj0(z, s0)
+            z = self.bn1(z)
+            if(ts % 199 == 0):
+                if(outsideTracker % 7500 == 0):
+                    z_array[0] += (z[1:100,:].sum()/100)
+                    z_array[1] += (z[:,1:500].sum()/500)
+            z = self.fc2(z)
+            z, s1 = self.dwmtj1(z, s1)
+            #v, so = self.out(torch.nn.functional.relu(z), so)
+            v, so = self.out(self.bn2(torch.nn.functional.relu(z)), so)
+            voltages[ts, :, :] = v
+        return voltages
+
 # define model container, putting together the model, encoder, and decoder
 class Model(torch.nn.Module):
     def __init__(self, encoder, snn, decoder):
@@ -208,11 +264,11 @@ def save(path, epoch, model, optimizer, is_best=False):
     )
 
 # model parameters
-EPOCHS = 4         # number of iterations
-T = [40]            # list of number of timesteps
-LR = 5e-3           # learning rate
+EPOCHS = 3         # number of iterations
+T = [200]            # list of number of timesteps
+LR = 1e-3          # learning rate
 SEED = 1            # number of seeds to run the network (kept as 1 if manual seed is applied)
-MTYPE = 'conv'      # snn type
+MTYPE = 'MLPNet'      # snn type
 
 # cpu is broken, but kept here in case I ever fix it
 if torch.cuda.is_available():
@@ -221,16 +277,17 @@ else:
     DEVICE = torch.device("cpu")
 
 # sweep parameters (define as needed)
-f_poisson = np.linspace(10e9,10e9,1)
+f_poisson = np.linspace(1e9,1e9,1)
 
-w1 = np.linspace(50e-9,25e-9,7)
-w2 = np.linspace(50e-9,75e-9,7)
+placeholder = np.linspace(0,0,1)
 
+#w1 = (5.000e-08,4.375e-08,3.750e-08,3.125e-08,2.500e-08)
+#w2 = (5.000e-08,5.625e-08,6.250e-08,6.875e-08,7.500e-08)
 
 
 fin_acc = []    # empty array to hold final accuracies
 # sweep variables of interest
-for f in range(0,len(w1)):
+for f in range(0,len(placeholder)):
     #for h in range(0,len(T)):
     # seed counter
     s = 0   
@@ -240,8 +297,10 @@ for f in range(0,len(w1)):
         if MTYPE == 'rec':
             snn = RecNet(28*28, 100, 10)
         elif MTYPE == 'conv':
-            snn = ConvNet(alpha=100, w1 = w1[f], w2 = w2[f])
-
+            snn = ConvNet(alpha=100, w1 = 25e-9, w2 = 30e-9, x_reset = x_th[f])
+        elif MTYPE == 'MLPNet':
+            snn = MLPNet(28*28,500,100,10)
+        
         model = Model( # instantiate a model
             encoder=encode.PoissonEncoder(seq_length=int(T[0]),dt=1e-10,f_max = f_poisson[0]),
             snn=snn,
@@ -265,5 +324,8 @@ for f in range(0,len(w1)):
         s += 1
         np.save("./outputs/" + target_dir + "/fin_acc.npy", np.concatenate(fin_acc))
 # reshape accuracies to a format that makes sense, then save
-fin_acc = np.concatenate(fin_acc).reshape(SEED, EPOCHS * (len(w1)))
+fin_acc = np.concatenate(fin_acc).reshape(SEED, EPOCHS * (len(placeholder)))
+print(f'L1: {float(z_array[1] / (math.floor(outsideTracker/7500)))}')
+print(f'L2: {float(z_array[0] / (math.floor(outsideTracker/7500)))}')
+
 np.save("./outputs/" + target_dir + "/fin_acc.npy", np.array(fin_acc))

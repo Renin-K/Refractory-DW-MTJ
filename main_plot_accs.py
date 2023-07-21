@@ -10,8 +10,8 @@ epoch_num = 4
 
 linestyle_str = ['-', ':','--','-.','-', ':','--','-.'] 
 
-w1 = np.linspace(50e-9,25e-9,7)
-w2 = np.linspace(50e-9,75e-9,7)
+w1 = np.linspace(40e-9,25e-9,7)
+w2 = np.linspace(40e-9,55e-9,7)
 
 epochs = np.linspace(1,epoch_num,epoch_num)
 figacc,axacc = plt.subplots(1,1,figsize=(10,10.4))
@@ -26,5 +26,5 @@ for i in range(num_sweep):
     axacc.plot(epochs,np.mean(accsa[i],axis=0),str(linestyle_str[i]), label = str(w2[i]/w1[i]))
     axacc.fill_between(epochs,np.mean(accsa[i],axis=0)-np.std(accsa[i],axis=1),np.mean(accsa[i],axis=0)+np.std(accsa[i],axis=1),alpha=0.3)
 axacc.legend(loc='upper left')
-axacc.set_title("Accuracy vs. Epochs for Width Ratios")
+axacc.set_title("Accuracy vs. Epochs for Different Weight Ratios")
 figacc.savefig('accs.svg')

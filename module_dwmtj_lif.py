@@ -17,22 +17,16 @@ class DWMTJParameters(NamedTuple):
     """
 
     tau_syn_inv: torch.Tensor = torch.as_tensor(1.0/5e-10)
-    #Width 1
-    w1: torch.Tensor = torch.as_tensor(25e-9) #tested 25 to 50
-    #Width 2
-    w2: torch.Tensor = torch.as_tensor(25e-9) #tested 50 to 75
+    w1: torch.Tensor = torch.as_tensor(25e-9)
+    w2: torch.Tensor = torch.as_tensor(25e-9)
     d: torch.Tensor = torch.as_tensor(1.5e-9)
     P: torch.Tensor = torch.as_tensor(0.7)
     Ms: torch.Tensor = torch.as_tensor(8e5)
     a: torch.Tensor = torch.as_tensor(0.05)
-    #External Magnetic Field
-    H: torch.Tensor = torch.as_tensor(0.0) #tested 
-    #Input current
-    I: torch.Tensor = torch.as_tensor(80e-6) #tested 10 to 80
-    #Threshold Location
-    x_th: torch.Tensor = torch.as_tensor(200e-9) #tested 125 to 200
-    #Reset Location
-    x_reset: torch.Tensor = torch.as_tensor(0.0e-9) #tested 0 to 180
+    H: torch.Tensor = torch.as_tensor(0.0)
+    I: torch.Tensor = torch.as_tensor(80e-6)
+    x_th: torch.Tensor = torch.as_tensor(200e-9)
+    x_reset: torch.Tensor = torch.as_tensor(0.0e-9)
     method: str = "super"
     alpha: torch.Tensor = torch.as_tensor(100.0)
 
@@ -46,6 +40,8 @@ class DWMTJFeedForwardState(NamedTuple):
 
     x: torch.Tensor
     i: torch.Tensor
+
+    refraction: torch.Tensor
 
 class DWMTJCell(SNNCell):
     """Module that computes a single euler-integration step of a
@@ -76,6 +72,11 @@ class DWMTJCell(SNNCell):
                 *input_tensor.shape,
                 device=input_tensor.device,
                 dtype=input_tensor.dtype,
+            ),
+            refraction=torch.zeros(
+                input_tensor.shape,
+                device=input_tensor.device,
+                dtype=input_tensor.dtype, #maybe replace bool
             ),
         )
         state.x.requires_grad = True
@@ -113,25 +114,36 @@ def _dwmtj_feed_forward_step_jit(
     mu_Hfield = 4e-7*math.pi*1.7595e11*Delt/p.a  # DW mobility Neel
     mu_Hslope = 4e-7*math.pi*1.7595e11*Delt*p.a  # DW mobility Walker
 
+
+    rI = torch.where(state.refraction == 0, state.i,0) #Only store current of Neurons that are not in refraction
+    w = state.x * ((p.w2-p.w1)/p.x_th) + p.w1 #Width of DW
+    dx = dt * (((rI * p.I)/(w * p.d)) * 
+        (2*9.274e-24*p.P)/(2*1.602e-19*p.Ms*(1+p.a**2)) - mu_Hfield*p.H - mu_Hslope*Hslope) #DW position update based on refreaction depedent current
+    x_next = state.x + dx #update
+
     # compute DW position updates
-    w = state.x*((p.w2-p.w1)/p.x_th) + p.w1
-    dx = dt * (((state.i * p.I)/(w * p.d)) * 
-        (2*9.274e-24*p.P)/(2*1.602e-19*p.Ms*(1+p.a**2)) - mu_Hfield*p.H - mu_Hslope*Hslope)
-    x_next = state.x + dx
+    #w = state.x*((p.w2-p.w1)/p.x_th) + p.w1
+    #dx = dt * (((state.i * p.I)/(w * p.d)) * 
+    #    (2*9.274e-24*p.P)/(2*1.602e-19*p.Ms*(1+p.a**2)) - mu_Hfield*p.H - mu_Hslope*Hslope)
+    #x_next = state.x + dx
 
     # compute new spikes
     z_new = threshold(x_next - p.x_th, p.method, p.alpha)
 
+    x_new = torch.where(x_next > 0, x_next, torch.tensor(0,dtype=torch.float32,device=torch.device("cuda")))
+    r_new = torch.where(z_new == 1, 1, state.refraction) #update reraction based on new spikes
+    r_new = torch.where(x_new == 0, 0, r_new) #update refraction based on reset
+
     # compute reset
-    x_new = (1 - z_new) * x_next + z_new * p.x_reset
-    x_new = torch.where(x_new > 0, x_new, torch.tensor(0,dtype=torch.float32,device=torch.device("cuda")))
+    #x_new = (1 - z_new) * x_next + z_new * p.x_reset
+    #x_new = torch.where(x_new > 0, x_new, torch.tensor(0,dtype=torch.float32,device=torch.device("cuda")))
 
     # compute current updates
     di = -dt * p.tau_syn_inv * state.i
     i_decayed = state.i + di
     i_new = input_tensor + i_decayed
 
-    return z_new, DWMTJFeedForwardState(x=x_new, i=i_new)
+    return z_new, DWMTJFeedForwardState(x=x_new, i=i_new,refraction = r_new)
 
 def dwmtj_feed_forward_step(
     input_tensor: torch.Tensor,
@@ -161,5 +173,6 @@ def dwmtj_feed_forward_step(
         state = DWMTJFeedForwardState(
             x=torch.full_like(input_tensor, jit_params.x_reset),
             i=torch.zeros_like(input_tensor),
+            refraction=torch.zeros_like(input_tensor),
         )
     return _dwmtj_feed_forward_step_jit(input_tensor, state=state, p=jit_params, dt=1e-10)
