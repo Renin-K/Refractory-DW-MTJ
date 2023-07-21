@@ -265,7 +265,7 @@ def save(path, epoch, model, optimizer, is_best=False):
 
 # model parameters
 EPOCHS = 3         # number of iterations
-T = [200]            # list of number of timesteps
+T = [500]            # list of number of timesteps
 LR = 1e-3          # learning rate
 SEED = 1            # number of seeds to run the network (kept as 1 if manual seed is applied)
 MTYPE = 'MLPNet'      # snn type
